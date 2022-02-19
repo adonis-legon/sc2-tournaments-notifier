@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  SAM Template for sc2-tournaments-notifier
+
+Parameters: 
+  NotificationEmail:
+    Type: String
+    Default: alegon@gmail.com
+
+Resources:
+  SC2TournamentNotifierTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: sc2-tournaments-notifier-topic
+      Subscription:
+      - Protocol: email
+        Endpoint: !Ref NotificationEmail
+  SC2TournamentNotifierFunctionRole:
+    Type: AWS::IAM::Role
+    DependsOn: SC2TournamentNotifierTopic
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: sc2-tournaments-notifier-cloudwatch-logs-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource:
+                  - '*'
+        - PolicyName: sc2-tournaments-notifier-sns-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'sns:Publish'
+                Resource:
+                  - !Ref SC2TournamentNotifierTopic
+  SC2TournamentNotifierFunction:
+    Type: AWS::Serverless::Function
+    DependsOn: SC2TournamentNotifierFunctionRole
+    Properties:
+      CodeUri: ../src
+      Handler: app.main.lambda_handler
+      Timeout: 60
+      Runtime: python3.9
+      Architectures:
+        - x86_64
+      Role: !GetAtt SC2TournamentNotifierFunctionRole.Arn
+      Events:
+        DailyScheduledExecution:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 8 * * ? *)
+      AutoPublishAlias: live
+      Environment:
+        Variables:
+          SC2_TOURNAMENT_NOTIFIER_TOPIC_ARN: !Ref SC2TournamentNotifierTopic
+  SC2TournamentNotifierLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${SC2TournamentNotifierFunction}"
+      RetentionInDays: 1
+
+Outputs:
+  SC2TournamentNotifierFunction:
+    Description: "SC2 Tournament Notifier Lambda Function ARN"
+    Value: !GetAtt SC2TournamentNotifierFunction.Arn
+  SC2TournamentNotifierIamRole:
+    Description: "Implicit IAM Role created for SC2TournamentNotifierFunction function"
+    Value: !GetAtt SC2TournamentNotifierFunctionRole.Arn
