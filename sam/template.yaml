@@ -66,7 +66,7 @@ Resources:
         DailyScheduledExecution:
           Type: Schedule
           Properties:
-            Schedule: cron(0 8 * * ? *)
+            Schedule: cron(0 11 * * ? *)
       AutoPublishAlias: live
       Environment:
         Variables:
