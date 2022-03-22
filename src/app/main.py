@@ -44,6 +44,7 @@ def lambda_handler(event, context):
             print(
                 f'Notification sent to topic: {topic_arn} with content: {notification_message}')
 
+        print(today)
         print(tournaments_to_notify)
         return {
             "statusCode": 200,
