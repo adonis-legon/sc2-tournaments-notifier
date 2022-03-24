@@ -51,14 +51,18 @@ def get_tournaments(query_types=None):
             soup = BeautifulSoup(requests.get(
                 tournament_link).content, "html.parser")
 
-            date_from = soup.find_all('div', string='Start Date:')[
-                0].find_next('div').text
-            date_to = soup.find_all('div', string='End Date:')[
-                0].find_next('div').text
+            tournaments[query_type][tournament_link] = {}
 
-            tournaments[query_type][tournament_link] = {
-                'date_from': datetime.fromisoformat(date_from).date(),
-                'date_to': datetime.fromisoformat(date_to).date()
-            }
+            date_from_elements = soup.find_all('div', string='Start Date:')
+            if date_from_elements and len(date_from_elements) > 0:
+                date_from_str = date_from_elements[0].find_next('div').text
+                tournaments[query_type][tournament_link]['date_from'] = datetime.fromisoformat(
+                    date_from_str).date()
+
+            date_to_elements = soup.find_all('div', string='End Date:')
+            if date_to_elements and len(date_to_elements) > 0:
+                date_to_str = date_to_elements[0].find_next('div').text
+                tournaments[query_type][tournament_link]['date_to'] = datetime.fromisoformat(
+                    date_to_str).date()
 
     return tournaments
