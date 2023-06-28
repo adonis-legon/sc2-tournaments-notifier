@@ -75,7 +75,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/lambda/${SC2TournamentNotifierFunction}"
-      RetentionInDays: 1
+      RetentionInDays: 90
 
 Outputs:
   SC2TournamentNotifierFunction:
