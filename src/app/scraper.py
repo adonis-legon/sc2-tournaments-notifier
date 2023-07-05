@@ -6,6 +6,8 @@ from enum import Enum
 import requests
 from bs4 import BeautifulSoup
 
+REQUEST_TIMEOUT = 30
+
 
 class TournamentQueryType(Enum):
     """
@@ -38,18 +40,19 @@ def get_tournaments(query_types=None):
 
     home_url = "https://liquipedia.net"
 
-    soup = BeautifulSoup(requests.get(
-        home_url + "/starcraft2/Main_Page").content, "html.parser")
-
     tournaments = {}
     for query_type in query_types:
-        tournaments_links = [home_url + e["href"] for e in soup.select(
-            f'#tournaments-menu-{str(query_type)} > li > a.dropdown-item')]
+        soup = BeautifulSoup(requests.get(
+            home_url + "/starcraft2/Main_Page", timeout=REQUEST_TIMEOUT).content, "html.parser")
+
+        css_query = f'#tournaments-menu-{str(query_type)} > li > a.dropdown-item'
+        tournaments_links = [home_url + e["href"]
+                             for e in soup.select(css_query)]
 
         tournaments[query_type] = {}
         for tournament_link in tournaments_links:
             soup = BeautifulSoup(requests.get(
-                tournament_link).content, "html.parser")
+                tournament_link, timeout=REQUEST_TIMEOUT).content, "html.parser")
 
             tournaments[query_type][tournament_link] = {}
 
